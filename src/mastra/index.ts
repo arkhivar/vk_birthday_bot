@@ -8,9 +8,9 @@ import { NonRetriableError } from "inngest";
 import { z } from "zod";
 
 import { sharedPostgresStorage } from "./storage";
-import { inngest, inngestServe } from "./inngest";
-import { exampleWorkflow } from "./workflows/exampleWorkflow";
-import { exampleAgent } from "./agents/exampleAgent";
+import { inngest, inngestServe, registerCronWorkflow } from "./inngest";
+import { birthdayWorkflow } from "./workflows/birthdayWorkflow";
+import { birthdayAgent } from "./agents/birthdayAgent";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -55,10 +55,12 @@ class ProductionPinoLogger extends MastraLogger {
 
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
-  // Register your workflows here
-  workflows: {},
-  // Register your agents here
-  agents: {},
+  workflows: {
+    birthdayWorkflow,
+  },
+  agents: {
+    birthdayAgent,
+  },
   mcpServers: {
     allTools: new MCPServer({
       name: "allTools",
@@ -155,3 +157,5 @@ if (Object.keys(mastra.getAgents()).length > 1) {
     "More than 1 agents found. Currently, more than 1 agents are not supported in the UI, since doing so will cause app state to be inconsistent.",
   );
 }
+
+registerCronWorkflow("0 1 * * *", birthdayWorkflow);
