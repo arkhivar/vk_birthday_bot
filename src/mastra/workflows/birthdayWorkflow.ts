@@ -1,6 +1,7 @@
 import { createStep, createWorkflow } from "../inngest";
 import { z } from "zod";
 import { birthdayAgent } from "../agents/birthdayAgent";
+import { gristTool } from "../tools/gristTool";
 
 const birthdayResultSchema = z.object({
   success: z.boolean().describe("Whether the operation completed successfully"),
@@ -31,70 +32,98 @@ const checkAndPostBirthdays = createStep({
     const gristDocId = "4w9eBjjxRqUh";
     const gristTableId = "Folks";
     
-    const prompt = `
-      Check for birthdays today and post to VK if any exist. Return a structured JSON response.
-      
-      Steps:
-      1. Use the fetch-grist-birthdays tool with docId "${gristDocId}" and tableId "${gristTableId}"
-      2. If the Grist fetch fails, return immediately with success: false and the error details
-      3. Look through all the records and find anyone whose 'DoB' field matches today's month and day (ignore the year)
-      4. For each person with a birthday today, calculate their age
-      5. If there are birthdays:
-         - Format a message in Russian like this:
-           "🎂 Дни рождения сегодня:
-           [Name] ([Age])
-           [Name] ([Age])"
-         - Post it to VK using the post-to-vk-wall tool with ownerId -227823182
-         - Set postedToVK based on whether the VK post succeeded
-      6. If there are NO birthdays today, set birthdaysFound: false and postedToVK: false
-      
-      Today's date is: ${new Date().toISOString().split('T')[0]}
-      
-      You MUST return your response in this exact JSON format:
-      {
-        "success": true/false,
-        "birthdaysFound": true/false,
-        "birthdayCount": number,
-        "message": "status message",
-        "error": "error details if any",
-        "postedToVK": true/false
-      }
-    `;
-    
     try {
-      logger?.info('📝 [BirthdayWorkflow] Calling birthday agent with tools enabled...');
+      // Step 1: Fetch data from Grist
+      logger?.info('📥 [BirthdayWorkflow] Fetching data from Grist...');
+      const gristResult = await gristTool.execute({
+        context: { docId: gristDocId, tableId: gristTableId },
+        mastra,
+      });
       
-      const response = await birthdayAgent.generateLegacy(
-        [{ role: "user", content: prompt }],
-        { 
-          mastra,
-          maxSteps: 5,
-        }
-      );
-      
-      logger?.info('✅ [BirthdayWorkflow] Agent completed', { text: response.text });
-      
-      // Parse JSON from the response
-      const jsonMatch = response.text.match(/\{[\s\S]*"success"[\s\S]*\}/);
-      if (!jsonMatch) {
-        logger?.warn('⚠️ [BirthdayWorkflow] Could not parse JSON from response');
+      if (!gristResult.success) {
+        logger?.error('❌ [BirthdayWorkflow] Grist fetch failed', { error: gristResult.error });
         return {
           success: false,
-          message: "Could not parse response",
+          message: `Failed to fetch from Grist: ${gristResult.error}`,
           birthdaysFound: false,
           postedToVK: false,
         };
       }
       
-      const result = JSON.parse(jsonMatch[0]);
-      logger?.info('📊 [BirthdayWorkflow] Parsed result', { result });
+      logger?.info('✅ [BirthdayWorkflow] Fetched records', { count: gristResult.records.length });
+      
+      // Step 2: Find birthdays matching today's month and day
+      const today = new Date();
+      const todayMonth = today.getUTCMonth() + 1; // 1-12
+      const todayDay = today.getUTCDate(); // 1-31
+      
+      const birthdayPeople: Array<{ name: string; age: number }> = [];
+      
+      for (const record of gristResult.records) {
+        const dob = record.fields.DoB;
+        const name = record.fields.name;
+        
+        if (!dob || !name) continue;
+        
+        // Convert Unix timestamp to date
+        const birthDate = new Date(dob * 1000);
+        const birthMonth = birthDate.getUTCMonth() + 1;
+        const birthDay = birthDate.getUTCDate();
+        
+        // Check if month and day match
+        if (birthMonth === todayMonth && birthDay === todayDay) {
+          const birthYear = birthDate.getUTCFullYear();
+          const age = today.getUTCFullYear() - birthYear;
+          birthdayPeople.push({ name, age });
+          logger?.info('🎂 [BirthdayWorkflow] Found birthday!', { name, age });
+        }
+      }
+      
+      // Step 3: If no birthdays, return
+      if (birthdayPeople.length === 0) {
+        logger?.info('ℹ️ [BirthdayWorkflow] No birthdays today');
+        return {
+          success: true,
+          message: "No birthdays found for today.",
+          birthdaysFound: false,
+          postedToVK: false,
+        };
+      }
+      
+      // Step 4: Format message and post to VK
+      const message = `🎂 Дни рождения сегодня:\n${birthdayPeople.map(p => `${p.name} (${p.age})`).join('\n')}`;
+      
+      logger?.info('📤 [BirthdayWorkflow] Posting to VK...', { message });
+      
+      const prompt = `Post this message to VK group wall (ownerId: -227823182):
+
+${message}
+
+Use the post-to-vk-wall tool. Return JSON with the result:
+{
+  "success": true/false,
+  "postedToVK": true/false,
+  "message": "description of what happened"
+}`;
+      
+      const response = await birthdayAgent.generateLegacy(
+        [{ role: "user", content: prompt }],
+        { mastra, maxSteps: 3 }
+      );
+      
+      logger?.info('✅ [BirthdayWorkflow] VK post attempt completed', { text: response.text });
+      
+      // Parse result
+      const posted = response.text.toLowerCase().includes('"postedtovk": true') || 
+                     response.text.toLowerCase().includes('successfully posted');
       
       return {
-        success: result.success || false,
-        message: result.message || "No message",
-        birthdaysFound: result.birthdaysFound || false,
-        postedToVK: result.postedToVK || false,
+        success: true,
+        message: `Found ${birthdayPeople.length} birthday(s) and ${posted ? 'posted to VK' : 'attempted to post'}`,
+        birthdaysFound: true,
+        postedToVK: posted,
       };
+      
     } catch (error) {
       logger?.error('❌ [BirthdayWorkflow] Error occurred', { error });
       return {
