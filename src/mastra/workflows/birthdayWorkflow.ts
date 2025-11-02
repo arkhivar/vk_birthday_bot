@@ -62,27 +62,38 @@ const checkAndPostBirthdays = createStep({
     `;
     
     try {
-      logger?.info('📝 [BirthdayWorkflow] Calling birthday agent with structured output...');
+      logger?.info('📝 [BirthdayWorkflow] Calling birthday agent with tools enabled...');
       
       const response = await birthdayAgent.generateLegacy(
         [{ role: "user", content: prompt }],
         { 
-          output: birthdayResultSchema,
           mastra,
+          maxSteps: 5,
         }
       );
       
-      logger?.info('✅ [BirthdayWorkflow] Agent completed', { 
-        object: response.object 
-      });
+      logger?.info('✅ [BirthdayWorkflow] Agent completed', { text: response.text });
       
-      const result = response.object as z.infer<typeof birthdayResultSchema>;
+      // Parse JSON from the response
+      const jsonMatch = response.text.match(/\{[\s\S]*"success"[\s\S]*\}/);
+      if (!jsonMatch) {
+        logger?.warn('⚠️ [BirthdayWorkflow] Could not parse JSON from response');
+        return {
+          success: false,
+          message: "Could not parse response",
+          birthdaysFound: false,
+          postedToVK: false,
+        };
+      }
+      
+      const result = JSON.parse(jsonMatch[0]);
+      logger?.info('📊 [BirthdayWorkflow] Parsed result', { result });
       
       return {
-        success: result.success,
-        message: result.message,
-        birthdaysFound: result.birthdaysFound,
-        postedToVK: result.postedToVK,
+        success: result.success || false,
+        message: result.message || "No message",
+        birthdaysFound: result.birthdaysFound || false,
+        postedToVK: result.postedToVK || false,
       };
     } catch (error) {
       logger?.error('❌ [BirthdayWorkflow] Error occurred', { error });
