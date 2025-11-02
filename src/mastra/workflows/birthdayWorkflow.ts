@@ -1,5 +1,6 @@
 import { createStep, createWorkflow } from "../inngest";
 import { z } from "zod";
+import { birthdayAgent } from "../agents/birthdayAgent";
 
 const birthdayResultSchema = z.object({
   success: z.boolean().describe("Whether the operation completed successfully"),
@@ -63,15 +64,11 @@ const checkAndPostBirthdays = createStep({
     try {
       logger?.info('📝 [BirthdayWorkflow] Calling birthday agent with structured output...');
       
-      const agent = mastra?.getAgent('birthdayAgent');
-      if (!agent) {
-        throw new Error('Birthday agent not found in mastra instance');
-      }
-      
-      const response = await agent.generateLegacy(
+      const response = await birthdayAgent.generateLegacy(
         [{ role: "user", content: prompt }],
         { 
           output: birthdayResultSchema,
+          mastra,
         }
       );
       
