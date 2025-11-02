@@ -29,7 +29,7 @@ const checkAndPostBirthdays = createStep({
     logger?.info('🎂 [BirthdayWorkflow] Starting birthday check...');
     
     const gristDocId = "4w9eBjjxRqUh";
-    const gristTableId = "1";
+    const gristTableId = "Folks";
     
     const prompt = `
       Check for birthdays today and post to VK if any exist. Return a structured JSON response.
