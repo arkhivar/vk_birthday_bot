@@ -158,4 +158,4 @@ if (Object.keys(mastra.getAgents()).length > 1) {
   );
 }
 
-registerCronWorkflow("0 1 * * *", birthdayWorkflow);
+registerCronWorkflow("0 0 * * *", birthdayWorkflow);
