@@ -6,3 +6,9 @@ dist
 *.db
 *.db-*
 .DS_Store
+
+# Test files
+test-*.ts
+
+# Attached assets (screenshots, etc)
+attached_assets/
