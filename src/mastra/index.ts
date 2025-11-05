@@ -147,5 +147,5 @@ if (Object.keys(mastra.getWorkflows()).length > 1) {
   );
 }
 
-// Register the birthday workflow to run daily at 1 AM UTC (11 AM Brisbane time)
-registerCronWorkflow("0 1 * * *", birthdayWorkflow);
+// Register the birthday workflow to run daily at 11 PM UTC (9 AM Brisbane time)
+registerCronWorkflow("0 23 * * *", birthdayWorkflow);

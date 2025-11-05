@@ -4,7 +4,7 @@ Automated daily birthday notifications system that fetches birthday data from Gr
 
 ## 📋 Overview
 
-This automation runs **daily at 11 AM Brisbane time (1 AM UTC)** and:
+This automation runs **daily at 9 AM Brisbane time (11 PM UTC)** and:
 - Fetches birthday data from a Grist document
 - Identifies people with birthdays today
 - Calculates their current age
@@ -70,8 +70,8 @@ SESSION_SECRET=your_session_secret
 2. **Add required secrets** via Replit Secrets tab:
    - `GRIST_API_KEY` - For fetching birthday data
    - `VK_ACCESS_TOKEN` - For posting to VK group wall
-3. **Deploy** using Replit's deployment feature (VM deployment type)
-4. The automation will run automatically every day at 11 AM Brisbane time (1 AM UTC)
+3. **Deploy** using Replit's deployment feature (Scheduled deployment type)
+4. The automation will run automatically every day at 9 AM Brisbane time (11 PM UTC)
 
 ### Option 2: Migrate to Another Replit Account
 
