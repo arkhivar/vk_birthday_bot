@@ -10,7 +10,6 @@ import { z } from "zod";
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe, registerCronWorkflow } from "./inngest";
 import { birthdayWorkflow } from "./workflows/birthdayWorkflow";
-import { birthdayAgent } from "./agents/birthdayAgent";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -58,9 +57,7 @@ export const mastra = new Mastra({
   workflows: {
     birthdayWorkflow,
   },
-  agents: {
-    birthdayAgent,
-  },
+  agents: {},
   mcpServers: {
     allTools: new MCPServer({
       name: "allTools",
@@ -142,7 +139,7 @@ export const mastra = new Mastra({
         }),
 });
 
-/*  Sanity check 1: Throw an error if there are more than 1 workflows.  */
+/*  Sanity check: Throw an error if there are more than 1 workflows.  */
 // !!!!!! Do not remove this check. !!!!!!
 if (Object.keys(mastra.getWorkflows()).length > 1) {
   throw new Error(
@@ -150,12 +147,5 @@ if (Object.keys(mastra.getWorkflows()).length > 1) {
   );
 }
 
-/*  Sanity check 2: Throw an error if there are more than 1 agents.  */
-// !!!!!! Do not remove this check. !!!!!!
-if (Object.keys(mastra.getAgents()).length > 1) {
-  throw new Error(
-    "More than 1 agents found. Currently, more than 1 agents are not supported in the UI, since doing so will cause app state to be inconsistent.",
-  );
-}
-
-registerCronWorkflow("0 0 * * *", birthdayWorkflow);
+// Register the birthday workflow to run daily at 1 AM UTC (11 AM Brisbane time)
+registerCronWorkflow("0 1 * * *", birthdayWorkflow);

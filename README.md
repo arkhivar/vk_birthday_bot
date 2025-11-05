@@ -17,8 +17,7 @@ This automation runs **daily at 11 AM Brisbane time (1 AM UTC)** and:
 **Components:**
 - **Grist Tool** (`src/mastra/tools/gristTool.ts`) - Fetches birthday records from Grist API
 - **VK Tool** (`src/mastra/tools/vkTool.ts`) - Posts messages to VK group wall using VK API v5.131
-- **Birthday Agent** (`src/mastra/agents/birthdayAgent.ts`) - AI agent for handling posting logic
-- **Birthday Workflow** (`src/mastra/workflows/birthdayWorkflow.ts`) - Orchestrates the birthday checking and posting
+- **Birthday Workflow** (`src/mastra/workflows/birthdayWorkflow.ts`) - Orchestrates the birthday checking and posting (uses TypeScript date logic, no AI)
 - **Cron Trigger** - Time-based trigger configured in `src/mastra/index.ts`
 
 ## 🔧 Configuration
@@ -44,10 +43,6 @@ PGUSER=your_db_user
 
 # Session Secret
 SESSION_SECRET=your_session_secret
-
-# AI Integration (auto-configured by Replit AI Integrations)
-AI_INTEGRATIONS_OPENAI_BASE_URL=auto_configured
-AI_INTEGRATIONS_OPENAI_API_KEY=auto_configured
 ```
 
 ### Grist Configuration
@@ -73,10 +68,10 @@ AI_INTEGRATIONS_OPENAI_API_KEY=auto_configured
 
 1. **Fork or import this project** to your Replit account
 2. **Add required secrets** via Replit Secrets tab:
-   - `GRIST_API_KEY`
-   - `VK_ACCESS_TOKEN`
-3. **Deploy** using Replit's deployment feature
-4. The automation will run automatically every day at 11 AM Brisbane time
+   - `GRIST_API_KEY` - For fetching birthday data
+   - `VK_ACCESS_TOKEN` - For posting to VK group wall
+3. **Deploy** using Replit's deployment feature (VM deployment type)
+4. The automation will run automatically every day at 11 AM Brisbane time (1 AM UTC)
 
 ### Option 2: Migrate to Another Replit Account
 
@@ -95,7 +90,6 @@ AI_INTEGRATIONS_OPENAI_API_KEY=auto_configured
 
 3. **Configure in new account**:
    - Add all required secrets (see Environment Variables section)
-   - Enable Replit AI Integrations for OpenAI
    - Create a PostgreSQL database (via Replit Database tool)
    - Deploy the automation
 
@@ -110,15 +104,15 @@ AI_INTEGRATIONS_OPENAI_API_KEY=auto_configured
 .
 ├── src/
 │   ├── mastra/
-│   │   ├── agents/
-│   │   │   └── birthdayAgent.ts       # AI agent for handling birthday posts
 │   │   ├── tools/
 │   │   │   ├── gristTool.ts           # Grist API integration
 │   │   │   └── vkTool.ts              # VK API integration
 │   │   ├── workflows/
-│   │   │   └── birthdayWorkflow.ts    # Main workflow logic
+│   │   │   └── birthdayWorkflow.ts    # Main workflow logic (pure TypeScript)
 │   │   ├── inngest/
 │   │   │   └── index.ts               # Inngest client and cron setup
+│   │   ├── storage/
+│   │   │   └── index.ts               # PostgreSQL storage configuration
 │   │   └── index.ts                   # Mastra instance and configuration
 │   └── triggers/                      # (unused in this automation)
 ├── scripts/
@@ -223,18 +217,18 @@ npm run format
 
 ### Key Technologies
 
-- **Mastra** - AI agent framework
-- **Inngest** - Workflow orchestration and scheduling
-- **AI SDK v4** - For LLM integration (compatible with legacy Mastra methods)
+- **Mastra** - Workflow framework for orchestration and scheduling
+- **Inngest** - Workflow orchestration and scheduling with cron support
 - **Grist API** - Document and table data access
 - **VK API v5.131** - Social media posting
+- **TypeScript** - Pure TypeScript date logic for reliable birthday matching
 
 ## 📝 Notes
 
-- **AI Integration**: Uses Replit AI Integrations for OpenAI (no personal API key needed)
-- **Database**: PostgreSQL is used by Mastra for agent memory and workflow state
+- **No AI Required**: This automation uses pure TypeScript logic for date matching and formatting
+- **Database**: PostgreSQL is used by Mastra for workflow state and persistence
 - **Security**: All secrets are managed via Replit Secrets (never committed to git)
-- **Reliability**: TypeScript handles date matching (more reliable than AI date parsing)
+- **Reliability**: TypeScript handles all date matching and age calculations deterministically
 
 ## 📄 License
 

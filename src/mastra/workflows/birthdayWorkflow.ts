@@ -1,7 +1,7 @@
 import { createStep, createWorkflow } from "../inngest";
 import { z } from "zod";
-import { birthdayAgent } from "../agents/birthdayAgent";
 import { gristTool } from "../tools/gristTool";
+import { vkTool } from "../tools/vkTool";
 
 const birthdayResultSchema = z.object({
   success: z.boolean().describe("Whether the operation completed successfully"),
@@ -38,7 +38,7 @@ const checkAndPostBirthdays = createStep({
       const gristResult = await gristTool.execute({
         context: { docId: gristDocId, tableId: gristTableId },
         mastra,
-      });
+      } as any);
       
       if (!gristResult.success) {
         logger?.error('❌ [BirthdayWorkflow] Grist fetch failed', { error: gristResult.error });
@@ -90,38 +90,36 @@ const checkAndPostBirthdays = createStep({
         };
       }
       
-      // Step 4: Format message and post to VK
+      // Step 4: Format message and post to VK directly
       const message = `🎂 Дни рождения сегодня:\n${birthdayPeople.map(p => `${p.name} (${p.age})`).join('\n')}`;
       
       logger?.info('📤 [BirthdayWorkflow] Posting to VK...', { message });
       
-      const prompt = `Post this message to VK group wall (ownerId: -227823182):
-
-${message}
-
-Use the post-to-vk-wall tool. Return JSON with the result:
-{
-  "success": true/false,
-  "postedToVK": true/false,
-  "message": "description of what happened"
-}`;
+      const vkResult = await vkTool.execute({
+        context: { 
+          message,
+          ownerId: -227823182 
+        },
+        mastra,
+      } as any);
       
-      const response = await birthdayAgent.generateLegacy(
-        [{ role: "user", content: prompt }],
-        { mastra, maxSteps: 3 }
-      );
+      if (!vkResult.success) {
+        logger?.error('❌ [BirthdayWorkflow] VK post failed', { error: vkResult.error });
+        return {
+          success: true,
+          message: `Found ${birthdayPeople.length} birthday(s) but failed to post to VK: ${vkResult.error}`,
+          birthdaysFound: true,
+          postedToVK: false,
+        };
+      }
       
-      logger?.info('✅ [BirthdayWorkflow] VK post attempt completed', { text: response.text });
-      
-      // Parse result
-      const posted = response.text.toLowerCase().includes('"postedtovk": true') || 
-                     response.text.toLowerCase().includes('successfully posted');
+      logger?.info('✅ [BirthdayWorkflow] Successfully posted to VK', { postId: vkResult.postId });
       
       return {
         success: true,
-        message: `Found ${birthdayPeople.length} birthday(s) and ${posted ? 'posted to VK' : 'attempted to post'}`,
+        message: `Found ${birthdayPeople.length} birthday(s) and successfully posted to VK`,
         birthdaysFound: true,
-        postedToVK: posted,
+        postedToVK: true,
       };
       
     } catch (error) {
