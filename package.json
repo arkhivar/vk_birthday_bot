@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
+    "start": "NODE_ENV=production mastra start",
     "build": "mastra build",
     "check": "tsc",
     "check:format": "prettier --check '**/*.ts'",
