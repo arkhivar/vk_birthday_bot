@@ -61,9 +61,13 @@ const checkAndPostBirthdays = createStep({
       
       for (const record of gristResult.records) {
         const dob = record.fields.DoB;
-        const name = record.fields.name;
+        const fullName = record.fields.fullName;
         
-        if (!dob || !name) continue;
+        // Only require DoB to be present
+        if (!dob) continue;
+        
+        // Use fullName if available, otherwise use "no name"
+        const name = fullName || "no name";
         
         // Convert Unix timestamp to date
         const birthDate = new Date(dob * 1000);

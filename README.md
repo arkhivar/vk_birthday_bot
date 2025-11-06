@@ -50,8 +50,8 @@ SESSION_SECRET=your_session_secret
 - **Document ID**: `4w9eBjjxRqUh`
 - **Table ID**: `Folks`
 - **Required Columns**:
-  - `name` (Text) - Person's name
-  - `DoB` (Date/Unix timestamp) - Date of birth
+  - `fullName` (Text) - Person's full name (displays "no name" if empty)
+  - `DoB` (Date/Unix timestamp) - Date of birth (required)
 
 **Important:** Your Grist API key must have at least **Viewer** access to the document.
 
