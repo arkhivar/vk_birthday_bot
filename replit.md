@@ -1,6 +1,6 @@
 # Overview
 
-This is a VK Birthday Notification Automation system built with Mastra/TypeScript and Inngest. The application runs daily at 9 AM Brisbane time (11 PM UTC) to check for birthdays in a Grist database and posts Russian-language birthday announcements to a VK group wall.
+This is a VK Birthday Notification Automation system built with Mastra/TypeScript and Inngest. The application runs daily at 9 AM VLAT (Vladivostok time, UTC+10) to check for birthdays in a Grist database and posts Russian-language birthday announcements to a VK group wall.
 
 The system is designed as a timed automation workflow that:
 - Fetches birthday records from Grist
@@ -51,7 +51,7 @@ Mastra's tool pattern is used to encapsulate external API interactions:
 
 ## Data Flow
 
-1. **Trigger**: Inngest cron trigger fires at scheduled time (11 PM UTC / 9 AM Brisbane time)
+1. **Trigger**: Replit Scheduled Deployment fires at 9 AM VLAT (Vladivostok time, UTC+10)
 2. **Fetch**: Grist tool retrieves all birthday records from document/table
 3. **Process**: Workflow step filters records for today's birthdays and calculates ages
 4. **Post**: VK tool posts formatted Russian message to group wall

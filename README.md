@@ -4,7 +4,7 @@ Automated daily birthday notifications system that fetches birthday data from Gr
 
 ## 📋 Overview
 
-This automation runs **daily at 9 AM Brisbane time (11 PM UTC)** and:
+This automation runs **daily at 9 AM VLAT (Vladivostok time, UTC+10)** and:
 - Fetches birthday data from a Grist document
 - Identifies people with birthdays today
 - Calculates their current age
@@ -70,8 +70,12 @@ SESSION_SECRET=your_session_secret
 2. **Add required secrets** via Replit Secrets tab:
    - `GRIST_API_KEY` - For fetching birthday data
    - `VK_ACCESS_TOKEN` - For posting to VK group wall
-3. **Deploy** using Replit's deployment feature (Scheduled deployment type)
-4. The automation will run automatically every day at 9 AM Brisbane time (11 PM UTC)
+3. **Deploy** using Replit's deployment feature:
+   - Select **"Scheduled Deployment"** type
+   - Set schedule to **"At 09:00 AM, every day"**
+   - Set timezone to **VLAT** (Vladivostok Time, UTC+10)
+   - Cron expression: `0 9 * * *`
+4. The automation will run automatically every day at 9 AM VLAT year-round
 
 ### Option 2: Migrate to Another Replit Account
 
@@ -143,15 +147,13 @@ curl -X POST "http://localhost:5000/api/workflows/birthdayWorkflow/run" \
 
 ## 📅 Schedule
 
-- **Cron Expression**: `0 1 * * *`
-- **UTC Time**: 01:00 AM
-- **Brisbane Time**: 11:00 AM (AEST/AEDT)
+- **Scheduled Deployment**: Configured in Replit Deployments
+- **Schedule**: At 09:00 AM, every day
+- **Timezone**: VLAT (Vladivostok Time, UTC+10)
+- **Cron Expression**: `0 9 * * *`
 - **Frequency**: Daily
 
-The schedule is configured in `src/mastra/index.ts` at line 161:
-```typescript
-registerCronWorkflow("0 1 * * *", birthdayWorkflow);
-```
+**Note**: The schedule is managed through Replit's Scheduled Deployment interface, which automatically handles timezone conversions. The in-code cron registration in `src/mastra/index.ts` is for development/testing purposes.
 
 ## 🔍 Troubleshooting
 
